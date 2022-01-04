@@ -1,0 +1,88 @@
+
+### download URMAP
+wget https://github.com/rcedgar/urmap/raw/master/bin/urmap
+chmod +x ./urmap
+
+
+### download genome - no SMaSH marker in Y or MT -> ignored
+wget -i chromosome_download_paths.txt
+cat Homo_sapiens.GRCh38.dna.chromosome.* > Homo_sapiens.GRCh38.dna.genome_smash.fa.gz
+rm Homo_sapiens.GRCh38.dna.chromosome.*
+gunzip Homo_sapiens.GRCh38.dna.genome_smash.fa.gz
+
+### create URMAP index ~ 20min
+./urmap -make_ufi Homo_sapiens.GRCh38.dna.genome_smash.fa -veryfast -output Homo_sapiens.GRCh38.dna.genome_smash.ufi
+
+
+### run URMAP mapping
+./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_2.fq.gz -samout sample_mapped.sam
+
+./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_2.fq.gz -samout sample2_mapped.sam
+
+## make BAM - try with pipe later
+samtools view -h -b -@ 10 sample_mapped.sam > sample_mapped.bam
+
+samtools view -h -b -@ 10 sample2_mapped.sam | samtools sort -@ 10 > sample2_mapped.bam
+#samtools view -h -b -@ 10 sample_mapped.sam - | samtools sort -@ !{num_threads} > sample_mapped.bam
+#samtools index -b -@ !{num_threads} sample_mapped.bam
+
+
+
+
+
+###test dna_rm
+(base) stefanloipfinger@FehrmannLab-HP-Z8-G4-Workstation-1:~/Documents/gitlab/DNAsmash_test$ ./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_2.fq.gz -samout sample_mapped.sam
+
+urmap v1.0.1480_i86linux64, 791Gb RAM, 96 cores
+(C) Copyright 2019 Robert C. Edgar
+https://drive5.com/urmap
+
+00:23 30.1Gb 100% Reading index Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi 
+00:23 30.1Gb Mapping paired /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_1.fq.gz
+
+              23  Seconds to load index
+             6.1  Minutes in mapper
+      16,272,206  Reads (16.3M)
+           44.3k  Reads/sec. (10 threads)
+       2,724,515  Mapped Q>=10 (16.7%)
+       1,134,051  Mapped Q< 10 (7.0%)
+      12,413,640  Unmapped (76.3%)
+
+              23  Seconds to load index
+             114  Seconds in mapper
+      16,272,206  Reads (16.3M)
+          142.7k  Reads/sec. (10 threads)
+       6,668,625  Mapped Q>=10 (41.0%)
+       2,248,644  Mapped Q< 10 (13.8%)
+       7,354,937  Unmapped (45.2%)
+
+
+
+
+(base) stefanloipfinger@FehrmannLab-HP-Z8-G4-Workstation-1:~/Documents/gitlab/DNAsmash_test$ ./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_2.fq.gz -samout sample2_mapped.sam
+
+urmap v1.0.1480_i86linux64, 791Gb RAM, 96 cores
+(C) Copyright 2019 Robert C. Edgar
+https://drive5.com/urmap
+
+00:22 30.1Gb 100% Reading index Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi 
+00:22 30.1Gb Mapping paired /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz
+
+              22  Seconds to load index
+             7.4  Minutes in mapper
+      70,811,768  Reads (70.8M)
+          159.8k  Reads/sec. (10 threads)
+      21,613,195  Mapped Q>=10 (30.5%)
+       7,763,770  Mapped Q< 10 (11.0%)
+      41,434,803  Unmapped (58.5%)
+
+              26  Seconds to load index
+             7.7  Minutes in mapper
+      70,811,768  Reads (70.8M)
+          152.6k  Reads/sec. (10 threads)
+      42,987,706  Mapped Q>=10 (60.7%)
+      15,678,710  Mapped Q< 10 (22.1%)
+      12,145,352  Unmapped (17.2%)
+
+
+

@@ -1,0 +1,27 @@
+
+### download URMAP
+wget https://github.com/rcedgar/urmap/raw/master/bin/urmap
+chmod +x ./urmap
+
+
+### download genome - no SMaSH marker in Y or MT -> ignored
+wget -i chromosome_download_paths.txt
+cat Homo_sapiens.GRCh38.dna_rm.chromosome.* > Homo_sapiens.GRCh38.dna_rm.genome_smash.fa.gz
+rm Homo_sapiens.GRCh38.dna_rm.chromosome.*
+gunzip Homo_sapiens.GRCh38.dna_rm.genome_smash.fa.gz
+
+### create URMAP index ~ 20min
+./urmap -make_ufi Homo_sapiens.GRCh38.dna_rm.genome_smash.fa -veryfast -output Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi
+
+
+### run URMAP mapping
+./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/E10/E10_2.fq.gz -samout sample_mapped.sam
+
+./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna_rm.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_2.fq.gz -samout sample2_mapped.sam
+
+## make BAM
+samtools view -S -b sample.sam > sample.bam
+
+
+
+

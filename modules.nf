@@ -3,31 +3,54 @@
 params.data_dir	= "$launchDir/data"
 
 
-process CREATE_KALLISTO_INDEX { 
-	publishDir "$params.data_dir/kallisto_index", mode: "copy"
+process URMAP_CREATE_INDEX { 
 
 	input:
 		val ensembl_release
 
 	output:
-		path "kallisto_transcripts.idx", emit: kallisto_index
-		path "Homo_sapiens.GRCh38.cdna_ncrna.fa.gz", emit: raw_transcripts
+		path "Homo_sapiens.GRCh38.dna.genome_smash.ufi", emit: urmap_index
 
 	shell:
 	'''
-	curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz
-	curl --remote-name ftp://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/ncrna/Homo_sapiens.GRCh38.ncrna.fa.gz
+	
+	### download necessary genome (without MT and Y)
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.2.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.3.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.4.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.5.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.6.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.7.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.8.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.9.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.10.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.11.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.12.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.14.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.15.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.16.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.17.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.18.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.19.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.20.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.21.fa.gz
+	#wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.22.fa.gz
+	wget http://ftp.ensembl.org/pub/release-!{ensembl_release}/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.X.fa.gz
+	
+	cat Homo_sapiens.GRCh38.dna.chromosome.* > Homo_sapiens.GRCh38.dna.genome_smash.fa.gz
+	rm Homo_sapiens.GRCh38.dna.chromosome.*
+	gunzip Homo_sapiens.GRCh38.dna.genome_smash.fa.gz
+	
+	### create index
+	./urmap -make_ufi Homo_sapiens.GRCh38.dna.genome_smash.fa -veryfast -output Homo_sapiens.GRCh38.dna.genome_smash.ufi
 
-	gunzip Homo_sapiens.GRCh38.cdna.all.fa.gz
-	gunzip Homo_sapiens.GRCh38.ncrna.fa.gz
-
-	### combine coding and uncoding transcripts
-	cat Homo_sapiens.GRCh38.cdna.all.fa Homo_sapiens.GRCh38.ncrna.fa > Homo_sapiens.GRCh38.cdna_ncrna.fa
-	gzip -v Homo_sapiens.GRCh38.cdna_ncrna.fa
-
-	kallisto index -k 31 -i kallisto_transcripts.idx Homo_sapiens.GRCh38.cdna_ncrna.fa.gz
 	'''
 }
+
+
+
 
 
 

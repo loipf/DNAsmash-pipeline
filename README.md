@@ -1,6 +1,6 @@
 # DNAsmash pipeline
 
-a fast DNA mapping pipeline from `.fastq` files for sample swap detection of matched files using URMAP and SMaSH
+a fast paired-end DNA mapping pipeline using URMAP from `.fastq` or `.bam` files for sample swap detection of matched files using SMaSH
 
 
 ---

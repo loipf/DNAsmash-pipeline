@@ -20,11 +20,10 @@ gunzip Homo_sapiens.GRCh38.dna.genome_smash.fa.gz
 ./urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_2.fq.gz -samout sample2_mapped.sam
 
 ## make BAM - try with pipe later
-samtools view -h -b -@ 10 sample_mapped.sam > sample_mapped.bam
-
 samtools view -h -b -@ 10 sample2_mapped.sam | samtools sort -@ 10 > sample2_mapped.bam
+samtools index -b -@ !{num_threads} sample_mapped.bam
+
 #samtools view -h -b -@ 10 sample_mapped.sam - | samtools sort -@ !{num_threads} > sample_mapped.bam
-#samtools index -b -@ !{num_threads} sample_mapped.bam
 
 
 

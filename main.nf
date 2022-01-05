@@ -12,7 +12,7 @@
 nextflow.enable.dsl=2
 
 include { 
-
+	URMAP_CREATE_INDEX;
 } from './modules.nf' 
 
 
@@ -25,10 +25,9 @@ include {
 params.dev_samples = -1
 
 params.project_dir	= "$projectDir"
-params.reads_dir	= "$params.project_dir/data/reads_raw"
-
-params.reads		= "$params.reads_dir/*/*_{1,2}.{fastq,fq,fastq.gz,fq.gz}"
+params.sample_list	= "$params.project_dir/sample_list.txt"
 params.data_dir	= "$params.project_dir/data"
+
 
 
 /*
@@ -44,7 +43,7 @@ params.ensembl_release	= 101
 log.info """\
 DNAsmash PIPELINE
 ===================================================
-reads			: $params.reads
+sample_list		: $params.sample_list
 data_dir		: $params.data_dir
 ensembl_version	: $params.ensembl_release
 ===================================================
@@ -57,40 +56,55 @@ ensembl_version	: $params.ensembl_release
  * main pipeline logic
  */
 workflow {
-	channel_reads = Channel
-			.fromFilePairs( params.reads )
-			.ifEmpty { error "cannot find any reads matching: ${params.reads}" }
+
+	channel_samples = Channel.fromPath(params.sample_list)
+			.splitText() { if(it?.trim()) { file(it.trim())} }
+			.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq|fq|fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
+			.ifEmpty { error "cannot find any entries in matching: ${params.sample_list}" }
 			.take( params.dev_samples )  // only consider a few files for debugging
-
-
-	CREATE_KALLISTO_INDEX(params.ensembl_release) 
-	CREATE_T2G_LIST(CREATE_KALLISTO_INDEX.out.raw_transcripts)
-	RM_DUPLICATE_TRANSCRIPTS(CREATE_KALLISTO_INDEX.out.raw_transcripts)
-
-	PREPROCESS_READS(channel_reads, params.num_threads, params.adapter_3_seq_file, params.adapter_5_seq_file)
-	channel_reads_prepro = PREPROCESS_READS.out.reads_prepro.map{ it -> tuple(it[0], tuple(it[1], it[2])) }
-	FASTQC_READS_RAW(channel_reads, params.num_threads)
-	FASTQC_READS_PREPRO(channel_reads_prepro, params.num_threads)
+			.branch {
+				fq: it[2].any{ it =~ /.*\.(fastq|fq|fastq\.gz|fq\.gz)$/ }
+				bam: it[2].any{ it =~ /.*\.(bam|bam\.bai)$/ }
+				other: true
+			}
+			
+		//channel_samples.view()
+			println "fq"
+			//channel_samples.fq.view()
+			println "bam"
+			//channel_samples.bam.view()
+			println "other"
 	
-	QUANT_KALLISTO(channel_reads_prepro, params.num_threads, CREATE_KALLISTO_INDEX.out.kallisto_index)
-	CREATE_KALLISTO_QC_TABLE(QUANT_KALLISTO.out.kallisto_json.collect())
-	CREATE_GENE_MATRIX(CREATE_KALLISTO_QC_TABLE.out.kallisto_qc_table, RM_DUPLICATE_TRANSCRIPTS.out.removal_info, RM_DUPLICATE_TRANSCRIPTS.out.trans_oneline_unique, CREATE_T2G_LIST.out.t2g_list, QUANT_KALLISTO.out.kallisto_abundance.collect() )
+	//channel_samples_other = channel_samples.other.toList()
+			
+			
 
-	CREATE_GENE_COUNT_PLOTS(CREATE_GENE_MATRIX.out.kallisto_qc_table, CREATE_GENE_MATRIX.out.gene_matrix, CREATE_GENE_MATRIX.out.gene_matrix_vst)
 
-	MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
-	MULTIQC_PREPRO(FASTQC_READS_PREPRO.out.reports.concat(PREPROCESS_READS.out.cutadapt).collect() )
-	MULTIQC_QUANT(QUANT_KALLISTO.out.kallisto_output.collect())
+	//URMAP_CREATE_INDEX(params.ensembl_release) 
+	
+	
+	
+	
+	//PREPROCESS_READS(channel_reads, params.num_threads, params.adapter_3_seq_file, params.adapter_5_seq_file)
+	//channel_reads_prepro = PREPROCESS_READS.out.reads_prepro.map{ it -> tuple(it[0], tuple(it[1], it[2])) }
+	
+	//QUANT_KALLISTO(channel_reads_prepro, params.num_threads, CREATE_KALLISTO_INDEX.out.kallisto_index)
+	//CREATE_KALLISTO_QC_TABLE(QUANT_KALLISTO.out.kallisto_json.collect())
+	//CREATE_GENE_MATRIX(CREATE_KALLISTO_QC_TABLE.out.kallisto_qc_table, RM_DUPLICATE_TRANSCRIPTS.out.removal_info, RM_DUPLICATE_TRANSCRIPTS.out.trans_oneline_unique, CREATE_T2G_LIST.out.t2g_list, QUANT_KALLISTO.out.kallisto_abundance.collect() )
+
+	//CREATE_GENE_COUNT_PLOTS(CREATE_GENE_MATRIX.out.kallisto_qc_table, CREATE_GENE_MATRIX.out.gene_matrix, CREATE_GENE_MATRIX.out.gene_matrix_vst)
+
+	//MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
 
 }
 
 
 
-
 workflow.onComplete { 
-	println ( workflow.success ? "\ndone! check the quality reports in --> $params.data_dir/quality_reports\n" : "oops .. something went wrong" ) } 
-
-
+	println ( workflow.success ? "\ndone!\n" : "oops .. something went wrong" )
+	//println ( workflow.success ? "\ndone! following files not found\n" : "oops .. something went wrong" )
+	//println("$channel_samples_other")
+ } 
 
 
 

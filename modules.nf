@@ -54,7 +54,8 @@ process URMAP_CREATE_INDEX {
 process MAPPING_URMAP { 
 
 	input:
-		tuple val(sample_id), val(absolute_path), val(file_names) 
+		//tuple val(sample_id), tuple(reads) 
+		path reads
 		val num_threads
 		//path urmap_index
 
@@ -64,39 +65,24 @@ process MAPPING_URMAP {
 
 	shell:
 	'''
-	
-	echo !{sample_id}
-	echo !{absolute_path}
-	echo !{file_names}
-	
-	prefix_path=!{absolute_path}/
-	prefix_path="test_"
-	echo $prefix_path
-	
-	#read_files=( "${!{file_names}[@]/#/${prefix_path}}" )
-	#echo $read_files
-	
-	test=( !{file_names})
-	echo $test
-	
-	#reads_array=$(echo !{file_names} | sed "s/, / /g; s/[//g"   )
-	reads_array=($(echo !{file_names} | sed 's/[][]//g; s/,//g'   ))
-	echo $reads_array
-	echo ${reads_array[@]}
-	
-	ARR_PRE=("${reads_array[@]/#/!{absolute_path}/}")
-	echo ${ARR_PRE[@]}
+	ls
+	#echo 
 	
 	### theoretically sorting not needed but maybe speeds up things
-	#reads_sorted=$(echo !{file_names} | xargs -n1 | sort | xargs) 
+	#echo "reads_sorted"
+	#reads_sorted=$(echo | xargs -n1 | sort | xargs)
 	#echo $reads_sorted
 	
-	#read_files=( "${!{file_names}[@]/#/${prefix_path}}" )
-	#echo $read_files
-	
 	### combine multiple seq files in the same sample directory with same direction together
-	#reads_sorted_1=$(find $reads_sorted -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
-	#reads_sorted_2=$(find $reads_sorted -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+	#reads_sorted_1=$(find $reads_array_full -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	#reads_sorted_1=$(find  -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	#reads_sorted_2=$(find $reads_array_full -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+	#reads_sorted_2=$(find  -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	#echo "reads1"
+	#echo $reads_sorted_1
+	#echo "reads2"
+	#echo $reads_sorted_2
+	
 	#cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
 	#cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
 	

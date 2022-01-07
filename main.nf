@@ -59,35 +59,30 @@ ensembl_version	: $params.ensembl_release
 workflow {
 
 	channel_samples = Channel.fromPath(params.sample_list)
-			.splitText() { if(it?.trim()) { file(it.trim())} }
-			.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
-			//.map { it -> tuple( it.getName(), it, it.collect{ it+"/"+it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } }  )   }
-			//.map { it -> tuple( it.getName(), it,it.getClass(), it.toString().getClass(), it.collect{ "${it.join('')}"} )   }
-			//.map { it -> tuple(it[0], it[1,2].collect { "$it[0]/$it[1]" })  }
-			//.map { it -> tuple(it[0], it[1,2].collect{ "$it[0]/$it[1]" } )  }
-			
-			//.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ }.collect { "pre/$it" }.join(' ') )   }
-			
-			//.collect { "pre/$it" }.join(' ')
+			.splitText() { if(it?.trim()) { file(it.trim())} }		
+			.map { it -> tuple( it.getName(), it.listFiles() )  }
 			.ifEmpty { error "cannot find any entries in matching: ${params.sample_list}" }
 			.take( params.dev_samples )  // only consider a few files for debugging
 			.branch {
-				fq: it[2].any{ it =~ /.*\.(fastq\.gz|fq\.gz)$/ }
-				bam: it[2].any{ it =~ /.*\.(bam|bam\.bai)$/ }
+				fq: it[1].any{ it =~ /.*\.(fastq\.gz|fq\.gz)$/ }
+				bam: it[1].any{ it =~ /.*\.(bam|bam\.bai)$/ }
 				other: true
 			}
 			
+	// TODO can be optimized to not copy everything into, but filter for following -> string-path struggles
+	//.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
+
 		//channel_samples.view()
 		//println "fq"
-		//channel_samples.fq.view()
+		channel_samples.fq.view()
 		//println "bam"
-		//channel_samples.bam.view()
+		channel_samples.bam.view()
 		//println "other"
-		//channel_samples.other.view()
+		channel_samples.other.view()
 	
 	//channel_samples_other = channel_samples.other.toList()
 			
-			
+	//channel_samples.fq.view()	
 
 
 	//URMAP_CREATE_INDEX(params.ensembl_release) 

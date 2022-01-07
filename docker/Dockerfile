@@ -21,7 +21,8 @@ RUN conda install samtools==1.11.0
 
 ### download URMAP
 RUN wget https://github.com/rcedgar/urmap/raw/master/bin/urmap
-RUN chmod +x ./urmap
+RUN mv urmap /usr/src/
+RUN chmod +x /usr/src/urmap
 
 
 

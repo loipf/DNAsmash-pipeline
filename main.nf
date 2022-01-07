@@ -13,6 +13,7 @@ nextflow.enable.dsl=2
 
 include { 
 	URMAP_CREATE_INDEX;
+	MAPPING_URMAP;
 } from './modules.nf' 
 
 
@@ -59,21 +60,30 @@ workflow {
 
 	channel_samples = Channel.fromPath(params.sample_list)
 			.splitText() { if(it?.trim()) { file(it.trim())} }
-			.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq|fq|fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
+			.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
+			//.map { it -> tuple( it.getName(), it, it.collect{ it+"/"+it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } }  )   }
+			//.map { it -> tuple( it.getName(), it,it.getClass(), it.toString().getClass(), it.collect{ "${it.join('')}"} )   }
+			//.map { it -> tuple(it[0], it[1,2].collect { "$it[0]/$it[1]" })  }
+			//.map { it -> tuple(it[0], it[1,2].collect{ "$it[0]/$it[1]" } )  }
+			
+			//.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ }.collect { "pre/$it" }.join(' ') )   }
+			
+			//.collect { "pre/$it" }.join(' ')
 			.ifEmpty { error "cannot find any entries in matching: ${params.sample_list}" }
 			.take( params.dev_samples )  // only consider a few files for debugging
 			.branch {
-				fq: it[2].any{ it =~ /.*\.(fastq|fq|fastq\.gz|fq\.gz)$/ }
+				fq: it[2].any{ it =~ /.*\.(fastq\.gz|fq\.gz)$/ }
 				bam: it[2].any{ it =~ /.*\.(bam|bam\.bai)$/ }
 				other: true
 			}
 			
 		//channel_samples.view()
-			println "fq"
-			//channel_samples.fq.view()
-			println "bam"
-			//channel_samples.bam.view()
-			println "other"
+		//println "fq"
+		//channel_samples.fq.view()
+		//println "bam"
+		//channel_samples.bam.view()
+		//println "other"
+		//channel_samples.other.view()
 	
 	//channel_samples_other = channel_samples.other.toList()
 			
@@ -81,8 +91,8 @@ workflow {
 
 
 	//URMAP_CREATE_INDEX(params.ensembl_release) 
-	
-	
+	//MAPPING_URMAP(channel_samples.fq, params.num_threads, URMAP_CREATE_INDEX.out.urmap_index)
+	MAPPING_URMAP(channel_samples.fq, params.num_threads)	
 	
 	
 	//PREPROCESS_READS(channel_reads, params.num_threads, params.adapter_3_seq_file, params.adapter_5_seq_file)

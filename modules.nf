@@ -44,10 +44,75 @@ process URMAP_CREATE_INDEX {
 	gunzip Homo_sapiens.GRCh38.dna.genome_smash.fa.gz
 	
 	### create index
-	./urmap -make_ufi Homo_sapiens.GRCh38.dna.genome_smash.fa -veryfast -output Homo_sapiens.GRCh38.dna.genome_smash.ufi
+	/usr/src/urmap -make_ufi Homo_sapiens.GRCh38.dna.genome_smash.fa -veryfast -output Homo_sapiens.GRCh38.dna.genome_smash.ufi
 
 	'''
 }
+
+
+
+process MAPPING_URMAP { 
+
+	input:
+		tuple val(sample_id), val(absolute_path), val(file_names) 
+		val num_threads
+		//path urmap_index
+
+	output:
+		//path "*.bam", emit: reads_mapped
+		
+
+	shell:
+	'''
+	
+	echo !{sample_id}
+	echo !{absolute_path}
+	echo !{file_names}
+	
+	prefix_path=!{absolute_path}/
+	prefix_path="test_"
+	echo $prefix_path
+	
+	#read_files=( "${!{file_names}[@]/#/${prefix_path}}" )
+	#echo $read_files
+	
+	test=( !{file_names})
+	echo $test
+	
+	#reads_array=$(echo !{file_names} | sed "s/, / /g; s/[//g"   )
+	reads_array=($(echo !{file_names} | sed 's/[][]//g; s/,//g'   ))
+	echo $reads_array
+	echo ${reads_array[@]}
+	
+	ARR_PRE=("${reads_array[@]/#/!{absolute_path}/}")
+	echo ${ARR_PRE[@]}
+	
+	### theoretically sorting not needed but maybe speeds up things
+	#reads_sorted=$(echo !{file_names} | xargs -n1 | sort | xargs) 
+	#echo $reads_sorted
+	
+	#read_files=( "${!{file_names}[@]/#/${prefix_path}}" )
+	#echo $read_files
+	
+	### combine multiple seq files in the same sample directory with same direction together
+	#reads_sorted_1=$(find $reads_sorted -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	#reads_sorted_2=$(find $reads_sorted -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
+	#cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
+	#cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
+	
+	samtools samtools
+	
+	# /usr/src/urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_2.fq.gz -samout sample2_mapped.sam
+
+	## make BAM - try with pipe later
+	#samtools view -h -b -@ 10 sample2_mapped.sam | samtools sort -@ 10 > sample2_mapped.bam
+	#samtools index -b -@ !{num_threads} sample_mapped.bam
+	
+	'''
+}
+
+
+
 
 
 

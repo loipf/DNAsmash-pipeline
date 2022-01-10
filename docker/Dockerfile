@@ -14,7 +14,7 @@ RUN conda config --add channels conda-forge
 ### bioinformatic tools
 RUN conda install r-base==4.0.5 r-essentials
 RUN R -e 'install.packages("pacman",repos = "http://cran.us.r-project.org")'
-RUN R -e 'pacman::p_load(data.table, pheatmap, BiocManager)'
+RUN R -e 'pacman::p_load(data.table, pheatmap, BiocManager, R.utils)'
 RUN R -e 'BiocManager::install("PoisonAlien/maftools")'
 
 RUN conda install samtools==1.11.0

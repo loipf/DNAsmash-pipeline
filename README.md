@@ -1,6 +1,6 @@
 # DNAsmash pipeline
 
-a fast paired-end DNA mapping pipeline using URMAP from `.fastq` or `.bam` files for sample swap detection of matched files using SMaSH
+a fast paired-end DNA mapping pipeline using URMAP from `.fastq` or `.bam` files for sample swap detection of matched files using SMaSH SNPs in maftools
 
 
 ---
@@ -28,9 +28,17 @@ nextflow run main.nf
 or
 
 ```sh
-nextflow run loipf/DNAsmash-pipeline -r main --project_dir /path/to/folder --reads_dir /path/to/samples --num_threads 10 -with-docker dnasmash-pipeline
+nextflow run loipf/DNAsmash-pipeline -r main --project_dir /path/to/folder --sample_list /path/to/list --num_threads 10 -with-docker dnasmash-pipeline
 ```
 for this execution to work properly, you have to be in the current project directory.
+
+the `--sample_list` option file must contain the folder path of each sample where the raw reads (`.fq.gz`|`.fastq.gz`) or already mapped reads (`.bam`+`.bam.bai`) are located (without any empty lines):
+```sh
+/path/to/reads_raw/sample1
+/path/to/reads_mapped/sample3
+/path/to/reads_raw/sample2
+/path/to/reads_mapped/sample4
+```
 
 
 optional extendable with:

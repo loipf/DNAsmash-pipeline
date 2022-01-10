@@ -14,6 +14,7 @@ nextflow.enable.dsl=2
 include { 
 	URMAP_CREATE_INDEX;
 	MAPPING_URMAP;
+	RUN_SMASH;
 } from './modules.nf' 
 
 
@@ -67,6 +68,11 @@ workflow {
 	//			bam: it[1].any{ it =~ /.*\.(bam|bam\.bai)$/ }
 	//			other: true
 	//		}
+	
+	// TODO can be optimized to not copy everything into, but filter for following -> string-path struggles
+	//.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
+
+
 
 	channel_samples = Channel.fromPath(params.sample_list)
 			.splitText() { if(it?.trim()) { file(it.trim()) } }		
@@ -77,54 +83,19 @@ workflow {
 				bam: it.list().any{ it =~ /.*\.(bam|bam\.bai)$/ }
 				other: true
 			}
-			
-	//channel_samples.fq.listFiles()
-	
-	//channel_samples.fq.map { it -> it.listFiles()}.view()
-	
-			
-	// TODO can be optimized to not copy everything into, but filter for following -> string-path struggles
-	//.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
-
-		//channel_samples.view()
-		//println "fq"
-		//channel_samples.fq.view()
-		//println "bam"
-		//channel_samples.bam.view()
-		//println "other"
-		//channel_samples.other.view()
-	
-	//channel_samples_other = channel_samples.other.toList()
-			
-	//channel_samples.fq.view()	
 
 
 	URMAP_CREATE_INDEX(params.ensembl_release) 
 	MAPPING_URMAP(channel_samples.fq, params.num_threads, URMAP_CREATE_INDEX.out.urmap_index)
+	RUN_SMASH(MAPPING_URMAP.out.reads_mapped.collect(), channel_samples.bam.collect(), params.num_threads)
 	
-	//MAPPING_URMAP(channel_samples.fq, params.num_threads)
-	
-	
-	//PREPROCESS_READS(channel_reads, params.num_threads, params.adapter_3_seq_file, params.adapter_5_seq_file)
-	//channel_reads_prepro = PREPROCESS_READS.out.reads_prepro.map{ it -> tuple(it[0], tuple(it[1], it[2])) }
-	
-	//QUANT_KALLISTO(channel_reads_prepro, params.num_threads, CREATE_KALLISTO_INDEX.out.kallisto_index)
-	//CREATE_KALLISTO_QC_TABLE(QUANT_KALLISTO.out.kallisto_json.collect())
-	//CREATE_GENE_MATRIX(CREATE_KALLISTO_QC_TABLE.out.kallisto_qc_table, RM_DUPLICATE_TRANSCRIPTS.out.removal_info, RM_DUPLICATE_TRANSCRIPTS.out.trans_oneline_unique, CREATE_T2G_LIST.out.t2g_list, QUANT_KALLISTO.out.kallisto_abundance.collect() )
-
-	//CREATE_GENE_COUNT_PLOTS(CREATE_GENE_MATRIX.out.kallisto_qc_table, CREATE_GENE_MATRIX.out.gene_matrix, CREATE_GENE_MATRIX.out.gene_matrix_vst)
-
-	//MULTIQC_RAW(FASTQC_READS_RAW.out.reports.collect() )
-
 }
 
 
 
 workflow.onComplete { 
 	println ( workflow.success ? "\ndone!\n" : "oops .. something went wrong" )
-	//println ( workflow.success ? "\ndone! following files not found\n" : "oops .. something went wrong" )
-	//println("$channel_samples_other")
- } 
+} 
 
 
 

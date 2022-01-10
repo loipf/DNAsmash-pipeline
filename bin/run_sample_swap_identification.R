@@ -3,12 +3,12 @@
 ############################################
 ### gather all files
 
-pacman::p_load(data.table, maftools, pheatmap)
+pacman::p_load(data.table, maftools, pheatmap, R.utils)
 
 args = commandArgs(trailingOnly=TRUE)
 NUM_THREADS = args[1]
 
-MAPPED_FILES = list.files(path=".", pattern="*.bam$", full.names=T)
+MAPPED_FILES = list.files(path=".", pattern="*.bam$", full.names=T,recursive=T)
 
 
 ############################################

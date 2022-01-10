@@ -75,12 +75,33 @@ process MAPPING_URMAP {
 	cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz	# TODO: make this copy operation optional
 	cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
 
-	/usr/src/urmap -veryfast -threads !{num_threads} -ufi {urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout - \
+	/usr/src/urmap -veryfast -threads !{num_threads} -ufi !{urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout - \
 	| samtools view -h -b -@ !{num_threads} - \
 	| samtools sort -@ !{num_threads} > !{sample_folder}.bam
 	samtools index -b -@ !{num_threads} !{sample_folder}.bam
 	
 
+	'''
+}
+
+
+
+process RUN_SMASH { 
+	publishDir "$params.data_dir", mode: "copy"
+
+	input:
+		path urmap_bam_files
+		path bam_files
+		val num_threads
+		
+	output:
+		path "sample_swap_results.rds"
+		path "matching_samples.txt"
+		path "sample_swap_corr_heatmap.pdf"
+
+	shell:
+	'''
+	run_sample_swap_identification.R !{num_threads}
 	'''
 }
 

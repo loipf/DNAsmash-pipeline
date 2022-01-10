@@ -52,48 +52,35 @@ process URMAP_CREATE_INDEX {
 
 
 process MAPPING_URMAP { 
+	tag "$sample_folder"
 
 	input:
-		//tuple val(sample_id), tuple(reads) 
-		path reads
+		path sample_folder
 		val num_threads
-		//path urmap_index
+		path urmap_index
 
 	output:
-		//path "*.bam", emit: reads_mapped
-		
+		tuple path("*.bam"), path("*.bam.bai"), emit: reads_mapped
 
 	shell:
 	'''
-	ls
-	#echo 
 	
 	### theoretically sorting not needed but maybe speeds up things
-	#echo "reads_sorted"
-	#reads_sorted=$(echo | xargs -n1 | sort | xargs)
-	#echo $reads_sorted
+	reads_sorted=$(ls -d !{sample_folder}/* | xargs -n1 | sort | xargs)
 	
 	### combine multiple seq files in the same sample directory with same direction together
-	#reads_sorted_1=$(find $reads_array_full -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
-	#reads_sorted_1=$(find  -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
-	#reads_sorted_2=$(find $reads_array_full -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
-	#reads_sorted_2=$(find  -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
-	#echo "reads1"
-	#echo $reads_sorted_1
-	#echo "reads2"
-	#echo $reads_sorted_2
+	reads_sorted_1=$(find $reads_sorted -name "*_1.fq.gz" -o -name "*_1.fastq.gz")
+	reads_sorted_2=$(find $reads_sorted -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
 	
-	#cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz
-	#cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
-	
-	samtools samtools
-	
-	# /usr/src/urmap -veryfast -threads 10 -ufi Homo_sapiens.GRCh38.dna.genome_smash.ufi -map2 /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_1.fq.gz -reverse /home/stefanloipfinger/Documents/impact/metastasis_rnaseq/reads_raw/B8/B8_2.fq.gz -samout sample2_mapped.sam
+	cat $reads_sorted_1 > raw_reads_connected_1.fastq.gz	# TODO: make this copy operation optional
+	cat $reads_sorted_2 > raw_reads_connected_2.fastq.gz
 
-	## make BAM - try with pipe later
-	#samtools view -h -b -@ 10 sample2_mapped.sam | samtools sort -@ 10 > sample2_mapped.bam
-	#samtools index -b -@ !{num_threads} sample_mapped.bam
+	/usr/src/urmap -veryfast -threads !{num_threads} -ufi {urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout - \
+	| samtools view -h -b -@ !{num_threads} - \
+	| samtools sort -@ !{num_threads} > !{sample_folder}.bam
+	samtools index -b -@ !{num_threads} !{sample_folder}.bam
 	
+
 	'''
 }
 

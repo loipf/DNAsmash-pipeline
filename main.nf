@@ -58,36 +58,51 @@ ensembl_version	: $params.ensembl_release
  */
 workflow {
 
+	// // a lot of trouble trying to filter path values and list input flows - complicated handling in modules
+	//channel_samples = Channel.fromPath(params.sample_list)
+	//		.splitText() { if(it?.trim()) { file(it.trim()) } }		
+	//		.map { it -> tuple( it.getName(), it.listFiles() )  }
+	//		.branch {
+	//			fq: it[1].any{ it =~ /.*\.(fastq\.gz|fq\.gz)$/ }
+	//			bam: it[1].any{ it =~ /.*\.(bam|bam\.bai)$/ }
+	//			other: true
+	//		}
+
 	channel_samples = Channel.fromPath(params.sample_list)
-			.splitText() { if(it?.trim()) { file(it.trim())} }		
-			.map { it -> tuple( it.getName(), it.listFiles() )  }
+			.splitText() { if(it?.trim()) { file(it.trim()) } }		
 			.ifEmpty { error "cannot find any entries in matching: ${params.sample_list}" }
 			.take( params.dev_samples )  // only consider a few files for debugging
 			.branch {
-				fq: it[1].any{ it =~ /.*\.(fastq\.gz|fq\.gz)$/ }
-				bam: it[1].any{ it =~ /.*\.(bam|bam\.bai)$/ }
+				fq: it.list().any{ it =~ /.*\.(fastq\.gz|fq\.gz)$/ }
+				bam: it.list().any{ it =~ /.*\.(bam|bam\.bai)$/ }
 				other: true
 			}
+			
+	//channel_samples.fq.listFiles()
+	
+	//channel_samples.fq.map { it -> it.listFiles()}.view()
+	
 			
 	// TODO can be optimized to not copy everything into, but filter for following -> string-path struggles
 	//.map { it -> tuple( it.getName(), it, it.list().findAll{ it =~ /.*\.(fastq\.gz|fq\.gz|bam|bam\.bai)$/ } )   }
 
 		//channel_samples.view()
 		//println "fq"
-		channel_samples.fq.view()
+		//channel_samples.fq.view()
 		//println "bam"
-		channel_samples.bam.view()
+		//channel_samples.bam.view()
 		//println "other"
-		channel_samples.other.view()
+		//channel_samples.other.view()
 	
 	//channel_samples_other = channel_samples.other.toList()
 			
 	//channel_samples.fq.view()	
 
 
-	//URMAP_CREATE_INDEX(params.ensembl_release) 
-	//MAPPING_URMAP(channel_samples.fq, params.num_threads, URMAP_CREATE_INDEX.out.urmap_index)
-	MAPPING_URMAP(channel_samples.fq, params.num_threads)	
+	URMAP_CREATE_INDEX(params.ensembl_release) 
+	MAPPING_URMAP(channel_samples.fq, params.num_threads, URMAP_CREATE_INDEX.out.urmap_index)
+	
+	//MAPPING_URMAP(channel_samples.fq, params.num_threads)
 	
 	
 	//PREPROCESS_READS(channel_reads, params.num_threads, params.adapter_3_seq_file, params.adapter_5_seq_file)

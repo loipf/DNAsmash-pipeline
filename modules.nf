@@ -73,8 +73,8 @@ process MAPPING_URMAP {
 	reads_sorted_2=$(find $reads_sorted -name "*_2.fq.gz" -o -name "*_2.fastq.gz")
 	
 	# TODO: make cat copy operation optional, reads < urmap index size lead to error
-	cat $reads_sorted_1 | seqkit seq --min-len 10 - -j 10 -o raw_reads_connected_1.fastq.gz
-	cat $reads_sorted_2 | seqkit seq --min-len 10 - -j 10 -o raw_reads_connected_2.fastq.gz
+	cat $reads_sorted_1 | seqkit seq --min-len 10 - -j !{num_threads} -o raw_reads_connected_1.fastq.gz
+	cat $reads_sorted_2 | seqkit seq --min-len 10 - -j !{num_threads} -o raw_reads_connected_2.fastq.gz
 
 	/usr/src/urmap -veryfast -threads !{num_threads} -ufi !{urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout - \
 	| samtools view -h -b -@ !{num_threads} - \

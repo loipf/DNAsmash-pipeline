@@ -38,7 +38,7 @@ params.data_dir	= "$params.project_dir/data"
 
 params.num_threads	= 5
 params.ensembl_release	= 101
-
+params.min_snp_read_depth	= 20
 
 
 
@@ -87,7 +87,7 @@ workflow {
 
 	URMAP_CREATE_INDEX(params.ensembl_release) 
 	MAPPING_URMAP(channel_samples.fq, params.num_threads, URMAP_CREATE_INDEX.out.urmap_index)
-	RUN_SMASH(MAPPING_URMAP.out.reads_mapped.collect(), channel_samples.bam.collect(), params.num_threads)
+	RUN_SMASH(MAPPING_URMAP.out.reads_mapped.collect(), channel_samples.bam.collect(), params.num_threads, params.min_snp_read_depth)
 	
 }
 

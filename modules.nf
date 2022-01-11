@@ -93,6 +93,7 @@ process RUN_SMASH {
 		path urmap_bam_files
 		path bam_files
 		val num_threads
+		val min_snp_read_depth
 		
 	output:
 		path "sample_swap_results.rds"
@@ -101,7 +102,7 @@ process RUN_SMASH {
 
 	shell:
 	'''
-	run_sample_swap_identification.R !{num_threads}
+	run_sample_swap_identification.R !{num_threads} !{min_snp_read_depth}
 	'''
 }
 

@@ -82,7 +82,6 @@ sampleSwaps_edited = function (bams = NULL, build = "hg19", prefix = NULL, add =
   samples_no_snps_found = setdiff(names(rc_af), colnames(rc_df)) ## edit
   rc_af_snps_found = rc_af[colnames(rc_df)] ## edit
   sample_matches = parallel::mclapply(seq_along(rc_af_snps_found), function(idx) {
-    print(idx)
     x = rc_af_snps_found[[idx]]
     if (idx == length(rc_af_snps_found)) {
       return(NULL)

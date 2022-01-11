@@ -10,7 +10,7 @@ NUM_THREADS = args[1]
 MIN_SNP_READ_DEPTH = args[2]
 
 MAPPED_FILES = list.files(path=".", pattern="*.bam$", full.names=T,recursive=T)
-MAPPED_FILES = MAPPED_FILES[1:10]
+
 
 ############################################
 ### run sample matching based on SMaSH

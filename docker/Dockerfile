@@ -17,7 +17,7 @@ RUN R -e 'install.packages("pacman",repos = "http://cran.us.r-project.org")'
 RUN R -e 'pacman::p_load(data.table, pheatmap, BiocManager, R.utils)'
 RUN R -e 'BiocManager::install("PoisonAlien/maftools")'
 
-RUN conda install samtools==1.11.0
+RUN conda install samtools==1.11.0 seqkit==2.1.0
 
 ### download URMAP
 RUN wget https://github.com/rcedgar/urmap/raw/master/bin/urmap

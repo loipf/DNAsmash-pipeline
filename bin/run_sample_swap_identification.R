@@ -91,7 +91,6 @@ sampleSwaps_edited = function (bams = NULL, build = "hg19", prefix = NULL, add =
     }
     cat("Comparing", names(rc_af_snps_found)[idx], "against rest..\n")
     x_compare = lapply(rest_samps, function(rest_idx) {
-      print(rest_idx)
       y = rc_af_snps_found[[rest_idx]]
       concordant_snps = lapply(seq_along(1:nrow(y)), function(row_idx) {
         fisher.test(x = matrix(c(x[row_idx, ref_rc], 

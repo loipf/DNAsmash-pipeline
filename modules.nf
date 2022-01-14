@@ -99,7 +99,9 @@ process RUN_SMASH {
 	output:
 		path "sample_swap_results.rds"
 		path "matching_samples.txt"
-		path "sample_swap_corr_heatmap.pdf"
+		path "matching_samples_dendrogram_clustering.csv"
+		path "sample_swap_corr_heatmap_all.pdf"
+		path "sample_swap_corr_heatmap_single_removed.pdf"
 
 	shell:
 	'''

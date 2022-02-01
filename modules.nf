@@ -76,9 +76,13 @@ process MAPPING_URMAP {
 	cat $reads_sorted_1 | seqkit seq --min-len 10 - -j !{num_threads} -o raw_reads_connected_1.fastq.gz
 	cat $reads_sorted_2 | seqkit seq --min-len 10 - -j !{num_threads} -o raw_reads_connected_2.fastq.gz
 
-	/usr/src/urmap -veryfast -threads !{num_threads} -ufi !{urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout - \
-	| samtools view -b -@ !{num_threads} - \
-	| samtools sort -@ !{num_threads} > !{sample_folder}.bam
+	#/usr/src/urmap -veryfast -threads !{num_threads} -ufi !{urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout - \
+	#| samtools view -b -@ !{num_threads} - \
+	#| samtools sort -@ !{num_threads} > !{sample_folder}.bam
+	
+	/usr/src/urmap -veryfast -threads !{num_threads} -ufi !{urmap_index} -map2 raw_reads_connected_1.fastq.gz -reverse raw_reads_connected_2.fastq.gz -samout !{sample_folder}.sam
+	
+	samtools view -b -@ !{num_threads} !{sample_folder}.sam | samtools sort -@ !{num_threads} > !{sample_folder}.bam
 	samtools index -b -@ !{num_threads} !{sample_folder}.bam
 	
 
